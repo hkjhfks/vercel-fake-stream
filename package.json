@@ -1,0 +1,22 @@
+{
+  "name": "vercel-fake-stream-proxy",
+  "version": "1.0.0",
+  "description": "A fake streaming proxy for OpenAI API deployed on Vercel",
+  "main": "api/chat.js",
+  "scripts": {
+    "dev": "npx vercel dev",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "openai",
+    "streaming",
+    "proxy",
+    "vercel"
+  ],
+  "author": "",
+  "license": "MIT"
+}
