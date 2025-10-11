@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/v1/chat/completions",
