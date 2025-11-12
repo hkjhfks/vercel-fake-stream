@@ -10,8 +10,8 @@ const log = (...args) => DEBUG && console.log('[proxy]', ...args);
 // 心跳包发送函数
 function sendHeartbeat(res) {
   try {
-    // 发送空的 SSE 注释行作为心跳包
-    res.write(': heartbeat\n\n');
+    // 发送仅包含空格的 SSE 注释行作为心跳包
+    res.write(': \n\n');
   } catch (error) {
     // 避免因连接关闭导致异常
   }
@@ -254,8 +254,9 @@ module.exports = async (req, res) => {
 
     // 内容分块并发送（加入轻微延迟模拟流式）
     let parts = chunkText(fullContent, Number(process.env.CHUNK_TARGET_LENGTH || 30));
-    if ((!parts || parts.length === 0) && contentLen > 0) {
-      parts = [fullContent];
+    // 若无可发送内容，按需求返回一个空格字符作为占位
+    if (!parts || parts.length === 0) {
+      parts = [contentLen > 0 ? fullContent : ' '];
     }
     for (const part of parts) {
       if (clientAborted) break;
