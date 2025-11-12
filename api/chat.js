@@ -7,20 +7,11 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
 const log = (...args) => DEBUG && console.log('[proxy]', ...args);
 
-// 是否发送可见的心跳 data 帧（默认使用注释行，兼容 OpenAI 客户端）
-const HEARTBEAT_VISIBLE = process.env.HEARTBEAT_VISIBLE === '1' || process.env.HEARTBEAT_VISIBLE === 'true';
-
 // 心跳包发送函数
 function sendHeartbeat(res) {
   try {
-    if (HEARTBEAT_VISIBLE) {
-      // 发送可见的 data 帧，客户端可监听并识别（不混入 Chat 内容）
-      // 注意：某些严格按 OpenAI ChatChunk 解析的 SDK 可能不识别该帧。
-      res.write(formatSSEData({ event: 'heartbeat', ts: Date.now() }));
-    } else {
-      // 默认：发送 SSE 注释（不打扰客户端解析）
-      res.write(': \n\n');
-    }
+    // 发送空的 SSE 注释行作为心跳包
+    res.write(': heartbeat\n\n');
   } catch (error) {
     // 避免因连接关闭导致异常
   }
@@ -263,9 +254,8 @@ module.exports = async (req, res) => {
 
     // 内容分块并发送（加入轻微延迟模拟流式）
     let parts = chunkText(fullContent, Number(process.env.CHUNK_TARGET_LENGTH || 30));
-    // 若无可发送内容，按需求返回一个空格字符作为占位
-    if (!parts || parts.length === 0) {
-      parts = [contentLen > 0 ? fullContent : ' '];
+    if ((!parts || parts.length === 0) && contentLen > 0) {
+      parts = [fullContent];
     }
     for (const part of parts) {
       if (clientAborted) break;
