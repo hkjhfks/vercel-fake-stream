@@ -318,6 +318,7 @@ curl -X GET https://your-project.vercel.app/v1/models \
 | `CORS_ALLOW_ORIGIN` | CORS 允许来源 | ❌ | `*` |
 | `ALLOW_ENV_API_KEY` | 允许无鉴权回退到环境密钥 | ❌ | `false` |
 | `HEARTBEAT_INTERVAL_MS` | 心跳间隔（毫秒） | ❌ | `3000` |
+| `HEARTBEAT_VISIBLE` | 是否以 data 帧发送可见心跳（JSON） | ❌ | `false` |
 | `CHUNK_TARGET_LENGTH` | 伪流式分块目标长度 | ❌ | `30` |
 | `CHUNK_DELAY_MS` | 伪流式每块延迟（毫秒） | ❌ | `35` |
 | `DEBUG` | 输出额外日志 | ❌ | `0` |
@@ -360,6 +361,25 @@ vercel env add UPSTREAM_EXTRA_HEADERS_JSON
 # 示例值：
 # {"HTTP-Referer":"https://your.domain/","X-Title":"vercel-fake-stream"}
 ```
+
+### 可见心跳（调试用）
+
+默认心跳使用 SSE 注释行，不会进入客户端消息回调。若需要在客户端看到心跳（如调试连通性、规避首字节超时观测），可启用：
+
+```bash
+vercel env add HEARTBEAT_VISIBLE
+# 输入：true
+vercel --prod
+```
+
+启用后，SSE 流中会周期性发送：
+
+```
+data: {"event":"heartbeat","ts":1730000000000}
+
+```
+
+注意：部分严格按 OpenAI ChatCompletionChunk 结构解析的 SDK 可能不识别该帧。推荐客户端忽略不包含 `choices[0].delta.content` 的数据，或单独处理 `event === 'heartbeat'`。
 
 ## 🔍 故障排除
 

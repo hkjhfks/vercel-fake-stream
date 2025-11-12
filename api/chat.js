@@ -7,11 +7,20 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
 const log = (...args) => DEBUG && console.log('[proxy]', ...args);
 
+// 是否发送可见的心跳 data 帧（默认使用注释行，兼容 OpenAI 客户端）
+const HEARTBEAT_VISIBLE = process.env.HEARTBEAT_VISIBLE === '1' || process.env.HEARTBEAT_VISIBLE === 'true';
+
 // 心跳包发送函数
 function sendHeartbeat(res) {
   try {
-    // 发送仅包含空格的 SSE 注释行作为心跳包
-    res.write(': \n\n');
+    if (HEARTBEAT_VISIBLE) {
+      // 发送可见的 data 帧，客户端可监听并识别（不混入 Chat 内容）
+      // 注意：某些严格按 OpenAI ChatChunk 解析的 SDK 可能不识别该帧。
+      res.write(formatSSEData({ event: 'heartbeat', ts: Date.now() }));
+    } else {
+      // 默认：发送 SSE 注释（不打扰客户端解析）
+      res.write(': \n\n');
+    }
   } catch (error) {
     // 避免因连接关闭导致异常
   }
